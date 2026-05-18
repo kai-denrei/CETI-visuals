@@ -54,6 +54,15 @@ No framework bloat. No PII. Compression over completeness.
 - 2026-05-18 — **DominicaCodas.csv date column has two formats** — `DD/MM/YYYY` (2005-2014)
   and `DD-MM-YYYY` (2014-2017). Parser tries slash first, then fills the rest with dash.
   All 8,719 rows parse cleanly. [[dev]]
+- 2026-05-18 — **v4 ships as a fourth sibling tab — telemetry**: a faithful reconstruction
+  of Impact Subsea's seaView 3.0.0 operator GUI for ISD4000 (depth/temp/AHRS), ISS360 (360°
+  imaging sonar), ISA500 (altimeter + echogram). Single `web/v4-sim.js` simulator drives a
+  six-gauge top strip plus polar sonar plus distance-tile + scrolling echogram. Reuses the
+  v3 `PlaybackClock` (clockbar shared with v3, hidden on v1/v2). **AESTHETIC OVERRIDE for
+  v4 only**: jet colourmap (matches source instrument) and dashboard tile layout (matches
+  operator workflow). Both bounded to v4 — v1/v2/v3 keep their rules. Override recorded in
+  `DEAD_ENDS.md`, `.deban/roles/ux.md`, `.deban/roles/pm.md`. v1, v2, v3 untouched.
+  [[pm]] [[arch]] [[ux]] [[dev]]
 
 ## Open Questions (cross-role)
 <!-- Unresolved items spanning more than one role -->

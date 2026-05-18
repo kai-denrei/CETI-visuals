@@ -4,13 +4,13 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>The Phonetics of a Sperm Whale — a reproduction</title>
-<link rel="stylesheet" href="styles.css?v=0215de45" />
+<link rel="stylesheet" href="styles.css?v=a185adb0" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="cb" content="0215de45">
-  <link rel="icon" type="image/svg+xml" href="public/cb-shapes/02.svg?v=0215de45">
-  <script src="public/cb-badge.js?v=0215de45" defer></script>
+  <meta name="cb" content="a185adb0">
+  <link rel="icon" type="image/svg+xml" href="public/cb-shapes/33.svg?v=a185adb0">
+  <script src="public/cb-badge.js?v=a185adb0" defer></script>
 </head>
 <body>
 <div class="page">
@@ -32,6 +32,11 @@
     <li><a href="#v3/rasterplot">Click-train rasterplot</a></li>
     <li><a href="#v3/ltsa">LTSA corpus heat-clock</a></li>
     <li><a href="#v3/ppi">PPI sonar sweep</a></li>
+  </ol>
+  <ol id="toc-v4" class="toc-list" hidden>
+    <li><a href="#v4/instruments">Instruments strip</a></li>
+    <li><a href="#v4/sonar">ISS360 imaging sonar</a></li>
+    <li><a href="#v4/altimeter">ISA500 altimeter + echogram</a></li>
   </ol>
   <dl class="meta" id="dataset-meta">
     <dt>source</dt><dd>sw-combinatoriality</dd>
@@ -56,6 +61,10 @@
     <button id="tab-v3" class="tab-button" role="tab" aria-selected="false" data-tab="v3">
       <span class="tab-num">v3</span><span class="tab-label">hydroacoustics</span>
       <span class="tab-meta">live · pausable · 2005&ndash;2018</span>
+    </button>
+    <button id="tab-v4" class="tab-button" role="tab" aria-selected="false" data-tab="v4">
+      <span class="tab-num">v4</span><span class="tab-label">telemetry</span>
+      <span class="tab-meta">Impact&nbsp;Subsea seaView — reconstruction</span>
     </button>
   </nav>
 
@@ -359,6 +368,21 @@
 
   </div><!-- /v2 pane -->
 
+  <!-- Sticky playback clock controls — shared between v3 and v4 panes.
+       Lives outside any pane; visibility gated by a `data-active-tab` body
+       attribute set in app.js, so only v3/v4 show it. -->
+  <div class="v3-clockbar" id="v3-clockbar" data-shared-clock>
+    <button id="v3-playpause" class="v3-playbtn" type="button" aria-label="play/pause">▶</button>
+    <div class="v3-speed" role="group" aria-label="playback speed">
+      <button data-speed="0.5" type="button">0.5×</button>
+      <button data-speed="1" type="button" class="is-active">1×</button>
+      <button data-speed="2" type="button">2×</button>
+      <button data-speed="4" type="button">4×</button>
+    </div>
+    <input id="v3-scrubber" type="range" min="0" max="1000" step="1" value="0" />
+    <span id="v3-readout" class="mono">2005-01</span>
+  </div>
+
   <!-- ============================ V3 GROUP ============================ -->
   <div class="tab-pane" data-pane="v3" hidden>
 
@@ -380,19 +404,6 @@
       framework; vanilla&nbsp;ES modules with canvas&nbsp;2D and SVG.
     </p>
   </header>
-
-  <!-- Sticky playback clock controls -->
-  <div class="v3-clockbar" id="v3-clockbar">
-    <button id="v3-playpause" class="v3-playbtn" type="button" aria-label="play/pause">▶</button>
-    <div class="v3-speed" role="group" aria-label="playback speed">
-      <button data-speed="0.5" type="button">0.5×</button>
-      <button data-speed="1" type="button" class="is-active">1×</button>
-      <button data-speed="2" type="button">2×</button>
-      <button data-speed="4" type="button">4×</button>
-    </div>
-    <input id="v3-scrubber" type="range" min="0" max="1000" step="1" value="0" />
-    <span id="v3-readout" class="mono">2005-01</span>
-  </div>
 
   <!-- 1. CLICK-TRAIN RASTERPLOT -->
   <section class="visual" id="v3/rasterplot">
@@ -485,6 +496,132 @@
 
   </div><!-- /v3 pane -->
 
+  <!-- ============================ V4 GROUP ============================ -->
+  <div class="tab-pane" data-pane="v4" hidden>
+
+  <header class="cover">
+    <div class="eyebrow">CETI visuals — v4</div>
+    <h1>An <em>underwater operator's console</em>,<br/>reconstructed in the browser.</h1>
+    <p class="lede">
+      A faithful reconstruction of <em>Impact Subsea's seaView</em> operator
+      software — the GUI that pilots watch while flying their ROV near the
+      seabed. Three instrument families are simulated: <em>ISD4000</em>
+      (depth, temperature, attitude), <em>ISS360</em> (360°
+      mechanically-scanning imaging sonar), and <em>ISA500</em> (downward
+      altimeter with echogram). Pausable, speed-controllable through the
+      same global clock that drives <em>v3</em>.
+    </p>
+    <p class="citation">
+      v4 deliberately violates two of the project's own aesthetic rules: the
+      sonar and echogram use the classic <em>jet</em> colourmap, and the
+      page adopts a dashboard tile layout. Both choices serve the
+      reconstruction brief — recognising the source software at a glance.
+      The numerics come from a small browser-side simulator; no real
+      sensor data is streamed.
+    </p>
+  </header>
+
+  <!-- 1. INSTRUMENT STRIP (six gauges) -->
+  <section class="visual" id="v4/instruments">
+    <header>
+      <h2><span class="num">Section 01 — pose</span>Instruments strip — ISD4000</h2>
+      <p class="blurb">
+        The vehicle's pose, six small dials wide. Depth and pressure from the
+        ISD4000's pressure sensor, water temperature alongside, then a
+        compass dial that rotates under a fixed up-pointing needle. Pitch
+        and roll are aircraft-style attitude indicators with a sky-and-earth
+        horizon; the convention is inherited from aviation because the
+        operator workflow is. The red 7-segment counter at the right tracks
+        cumulative full revolutions — useful when a tether is in play.
+      </p>
+    </header>
+    <div class="v4-gauges-strip">
+      <div class="v4-gauge v4-gauge--depth"><canvas id="v4-g-depth" width="240" height="120"></canvas></div>
+      <div class="v4-gauge v4-gauge--temp"><canvas id="v4-g-temp" width="180" height="120"></canvas></div>
+      <div class="v4-gauge v4-gauge--dial"><canvas id="v4-g-heading" width="160" height="160"></canvas></div>
+      <div class="v4-gauge v4-gauge--dial"><canvas id="v4-g-pitch" width="160" height="160"></canvas></div>
+      <div class="v4-gauge v4-gauge--dial"><canvas id="v4-g-roll" width="160" height="160"></canvas></div>
+      <div class="v4-gauge v4-gauge--turns"><canvas id="v4-g-turns" width="140" height="120"></canvas></div>
+    </div>
+    <p class="caption">
+      All six gauges read from a single shared simulator. The compass dial
+      rotates anti-clockwise to keep the current heading at the top under
+      the fixed amber needle (the source software uses this convention).
+      Numbers are monospaced to lock alignment between frames.
+    </p>
+  </section>
+
+  <!-- 2. ISS360 SONAR -->
+  <section class="visual" id="v4/sonar">
+    <header>
+      <h2><span class="num">Section 02 — imaging sonar</span>ISS360 — 360° polar</h2>
+      <p class="blurb">
+        A 360° mechanically-scanning sonar. A bright red line — the
+        <em>sweep</em> — rotates around the centre at roughly one revolution
+        per four seconds, and the slice immediately behind it is the
+        freshest. As the sweep continues, that slice fades through alpha
+        decay until the next time the sweep crosses it. Range rings at
+        0.5 / 1.0 / 1.5 / 2.0 m; a solid dark deadzone inside 0.3 m.
+        Three world-fixed targets are visible: a pool wall arc, a pipe
+        target, and a small secondary scatterer. As the vehicle yaws, the
+        targets re-project to new bearings on the display.
+      </p>
+    </header>
+    <div class="v4-sonar-wrap">
+      <div class="v4-sonar-frame">
+        <canvas id="v4-sonar-canvas" width="520" height="520"></canvas>
+      </div>
+      <div class="v4-sonar-strip">
+        <span class="v4-strip-key">Gain</span>
+        <span class="v4-strip-bar"><span class="v4-strip-fill" style="width:46%"></span></span>
+        <span class="v4-strip-key">−</span>
+        <span class="v4-strip-val">2.00 m</span>
+        <span class="v4-strip-key">+</span>
+        <span class="v4-strip-key">CHIRP OFF</span>
+        <span class="v4-strip-key">Speed</span>
+        <span class="v4-strip-bar"><span class="v4-strip-fill" style="width:30%"></span></span>
+        <span class="v4-strip-key">Quality</span>
+        <span class="v4-strip-spacer"></span>
+        <span class="v4-strip-val" id="v4-sonar-summary">—</span>
+      </div>
+    </div>
+    <p class="caption">
+      Jet colourmap on return amplitude — perceptually non-uniform, chosen
+      deliberately to match the source instrument. Sweep direction is
+      clockwise; bearing zero in the local frame is screen-up. The display
+      is in the vehicle's own frame, so world-fixed targets appear to rotate
+      around the centre as the vehicle yaws.
+    </p>
+  </section>
+
+  <!-- 3. ISA500 ALTIMETER + ECHOGRAM -->
+  <section class="visual" id="v4/altimeter">
+    <header>
+      <h2><span class="num">Section 03 — altimeter</span>ISA500 — distance + echogram</h2>
+      <p class="blurb">
+        A downward-pinging altimeter. The top tile shows the current
+        distance to bottom (or to whatever the beam first hits) and where
+        that distance falls within the safe-to-collision band — green,
+        amber, red. Below is the echogram: each new ping becomes a new
+        column at the right edge, jet-coloured by return intensity, and the
+        column field scrolls left. A cyan line traces the peak-return
+        distance over the last few seconds, which is the value the top
+        tile is reading.
+      </p>
+    </header>
+    <div class="v4-alt-grid">
+      <div class="v4-alt-dist"><canvas id="v4-alt-dist-canvas" width="320" height="120"></canvas></div>
+      <div class="v4-alt-echo"><canvas id="v4-alt-echo-canvas" width="600" height="240"></canvas></div>
+    </div>
+    <p class="caption" id="v4-alt-summary-cap">
+      The traffic-light bar is fixed at 0 – 3 m range; the cursor moves
+      with the live distance. Echogram scrolls right-to-left. Both panels
+      pause when the global clock pauses.
+    </p>
+  </section>
+
+  </div><!-- /v4 pane -->
+
   <footer class="foot">
     Reproduction of Sharma et&nbsp;al. 2024 from the public
     <span class="mono">sw-combinatoriality</span> bundle (CC&nbsp;BY-4.0 data).
@@ -497,6 +634,6 @@
 </main>
 </div>
 
-<script type="module" src="app.js?v=0215de45"></script>
+<script type="module" src="app.js?v=a185adb0"></script>
 </body>
 </html>

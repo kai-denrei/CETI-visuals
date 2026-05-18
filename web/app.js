@@ -17,6 +17,10 @@ import { mountRasterplot } from "./v3-rasterplot.js";
 import { mountLtsa } from "./v3-ltsa.js";
 import { mountPpi } from "./v3-ppi.js";
 
+import { mountGauges } from "./v4-gauges.js";
+import { mountSonar } from "./v4-sonar.js";
+import { mountAltimeter } from "./v4-altimeter.js";
+
 const BASE = "../data/derived/";
 
 async function loadJSON(name, optional = false) {
@@ -67,6 +71,13 @@ async function main() {
     mountPpi(ctx),
   ].filter(Boolean);
 
+  // v4 modules — attach/detach mirror v3 pattern.
+  const v4Modules = [
+    mountGauges(ctx),
+    mountSonar(ctx),
+    mountAltimeter(ctx),
+  ].filter(Boolean);
+
   // ---- v3 clock UI wiring -------------------------------------------------
   const playBtn = document.getElementById("v3-playpause");
   const speedBtns = document.querySelectorAll(".v3-speed button");
@@ -101,17 +112,21 @@ async function main() {
     v1: document.querySelector('[data-pane="v1"]'),
     v2: document.querySelector('[data-pane="v2"]'),
     v3: document.querySelector('[data-pane="v3"]'),
+    v4: document.querySelector('[data-pane="v4"]'),
   };
   const tocs = {
     v1: document.getElementById("toc-v1"),
     v2: document.getElementById("toc-v2"),
     v3: document.getElementById("toc-v3"),
+    v4: document.getElementById("toc-v4"),
   };
   const tabs = {
     v1: document.getElementById("tab-v1"),
     v2: document.getElementById("tab-v2"),
     v3: document.getElementById("tab-v3"),
+    v4: document.getElementById("tab-v4"),
   };
+  const clockBar = document.getElementById("v3-clockbar");
 
   let activeTab = "v1";
 
@@ -126,13 +141,19 @@ async function main() {
         tabs[k].setAttribute("aria-selected", String(isActive));
       }
     }
-    // v3 subscription gates — only attach when visible so hidden tabs don't
-    // burn cycles.
+    // Clockbar is shared between v3 and v4.
+    if (clockBar) clockBar.hidden = !(tab === "v3" || tab === "v4");
+    // Subscription gates — only attach when the pane is visible.
     if (tab === "v3") {
       v3Modules.forEach(m => m.attach && m.attach());
+      v4Modules.forEach(m => m.detach && m.detach());
+    } else if (tab === "v4") {
+      v4Modules.forEach(m => m.attach && m.attach());
+      v3Modules.forEach(m => m.detach && m.detach());
     } else {
       v3Modules.forEach(m => m.detach && m.detach());
-      // Auto-pause when leaving v3 — playback should not run invisibly.
+      v4Modules.forEach(m => m.detach && m.detach());
+      // Auto-pause when leaving the clocked tabs — playback should not run invisibly.
       clock.pause();
     }
     if (scrollTarget) {
@@ -146,7 +167,8 @@ async function main() {
   function applyHash() {
     const h = location.hash.replace(/^#/, "");
     let tab = "v1", target = null;
-    if (h.startsWith("v3")) tab = "v3";
+    if (h.startsWith("v4")) tab = "v4";
+    else if (h.startsWith("v3")) tab = "v3";
     else if (h.startsWith("v2")) tab = "v2";
     if (h.includes("/")) target = h;
     setTab(tab, target);
@@ -155,6 +177,7 @@ async function main() {
   tabs.v1.addEventListener("click", () => { location.hash = "v1"; });
   tabs.v2.addEventListener("click", () => { location.hash = "v2"; });
   if (tabs.v3) tabs.v3.addEventListener("click", () => { location.hash = "v3"; });
+  if (tabs.v4) tabs.v4.addEventListener("click", () => { location.hash = "v4"; });
   window.addEventListener("hashchange", applyHash);
 
   applyHash();

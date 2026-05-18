@@ -144,3 +144,48 @@ tab hide to save battery.
 Architecture rules: vanilla ESM, canvas/SVG only, no bundler. v1 and v2 modules untouched.
 Tab router stays hash-based (`#v3`, `#v3/rasterplot`, etc.). AudioContext created on first
 user gesture in §1 only. Perceptually uniform colour ramps only — no jet/rainbow.
+
+## v4 — telemetry (planned, surfaced 2026-05-18)
+
+v4 adds a fourth tab — **telemetry** — a faithful reconstruction of the **Impact Subsea
+seaView 3.0.0** operator software, the GUI that pilots use to drive their ISD4000
+(depth/temp/AHRS), ISS360 (360° mechanically scanning imaging sonar), and ISA500
+(altimeter / echosounder) modules underwater. The brief is *reconstruction, not improvement*:
+the reader should recognise the source software's lineage at a glance.
+
+**Aesthetic override (recorded across `.deban/`).** Two project rules are explicitly
+overridden for v4 only:
+
+1. `HYDROACOUSTICS.md` "perceptually uniform colourmaps only — no jet, no rainbow" — v4
+   uses **jet** on the polar sonar and the echogram because the real instrument does, and
+   the brief is to reconstruct the operator's lived experience.
+2. `CLAUDE.md` "avoid dashboard-template look" — v4 *is* an operator dashboard: six
+   gauge tiles across the top, sonar + altimeter panels below. Reproducing the spatial
+   layout is part of the reconstruction.
+
+Both overrides are bounded: v4 only. v1/v2/v3 keep their editorial rules unchanged.
+
+**Module structure** (all under `web/`, vanilla ESM, no bundler):
+
+- `v4-sim.js` — single source of truth. State: depth (m), temperature (°C), heading (deg),
+  pitch (deg), roll (deg), turns (cumulative), distance (altimeter m), echogram ring
+  buffer, sonar polar field (360 × 200). Subscribes to `PlaybackClock`; each frame
+  advances all fields by `clock.speed × dt`. Pause halts everything, scrub holds the
+  pose, speed multiplier scales drift rates.
+- `v4-gauges.js` — six top-strip instrument tiles: depth (m + bar), temperature (°C),
+  heading compass (rotating dial, fixed needle), pitch (half-circle attitude), roll
+  (full-circle attitude), turns counter (red 7-seg style).
+- `v4-sonar.js` — ISS360 polar. Canvas 2D. Range rings + crosshairs + deadzone + rotating
+  red sweep with alpha-decay trail. Jet-coloured returns from a synthetic scene (pool wall
+  + one pipe target + speckle), polar-to-cartesian sampled per frame.
+- `v4-altimeter.js` — ISA500 distance tile + scrolling echogram strip chart. Jet-coloured
+  intensity columns appended at right edge, scrolling left. Traffic-light bar shows the
+  current distance as 0–100% of max range.
+
+**Reuses the v3 clock** — no new clock module. The clockbar UI is now shared between v3
+and v4 (mount the bar inside both panes' DOM, drive from the same singleton). Tab-switch
+auto-pause logic stays.
+
+**No bundle change.** v4 is pure browser-side simulation. No new JSON, no pipeline edit.
+
+**Tab routing.** Adds `#v4`, `#v4/sonar`, `#v4/altimeter` deep links mirroring v3.

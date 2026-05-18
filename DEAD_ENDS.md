@@ -94,3 +94,45 @@ without claiming the substrate is acoustic tokens.
 browser-friendly format AND a relaxation of the no-bundler constraint, AND a
 genuine user need that the surrogate fails to convey.
 
+---
+
+## 2026-05-18 — v4: perceptually uniform colourmap for the ISS360 polar and ISA500 echogram
+
+**Tried:** Considered using the project's standard OKLCH-baked magma ramp (the
+one v3 uses for the LTSA) for v4's sonar polar and altimeter echogram instead
+of jet, so the no-rainbow rule from `HYDROACOUSTICS.md` would hold across all
+four tabs.
+
+**Why it failed / was rejected:** v4's brief is *reconstruction* of the Impact
+Subsea seaView operator software, not improvement on it. The source instrument
+ships with jet, every operator who has used the hardware reads the display
+with jet, and substituting a different ramp would actively break the
+"recognise the source software at a glance" goal that justifies v4 existing
+in the first place. The override is bounded to v4 only — v1, v2, and v3 keep
+their perceptually-uniform discipline; the rule is unchanged everywhere except
+the one tab whose entire purpose is faithful imitation.
+
+**What would need to change to revisit:** v4 being promoted from
+"reconstruction" to "general hydroacoustic primitive" — i.e. lifted out of
+the seaView lineage and reused for arbitrary sonar/echogram displays.
+At that point the brief stops being faithful imitation and the rainbow
+rule re-applies.
+
+---
+
+## 2026-05-18 — v4: simulated audio click / sonar ping
+
+**Tried:** Considered synthesising the audible ping for the ISS360 sweep (a
+short ~50 ms tone burst per ping) and the ISA500 echo return.
+
+**Why it failed / was rejected:** The source software itself doesn't synthesise
+audio — the sonar is silent at the operator console; only the underwater
+acoustics matter. Adding audio would be inventing UX the brief explicitly
+says to reconstruct, not improve. Also: the v3 audio toggle is already the
+project's audio surface, and duplicating that pattern for a tab that has no
+audio in source is gratuitous.
+
+**What would need to change to revisit:** A specific Gerald request to add a
+sonar-ping audio cue, or a need to teach the rhythm of the sweep through a
+non-visual channel (e.g. accessibility).
+
