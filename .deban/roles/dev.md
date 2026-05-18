@@ -1,0 +1,54 @@
+---
+role: dev
+owner: Gerald
+status: active
+last-updated: 2026-05-18
+---
+
+# Development
+
+## Scope
+
+Implementation: data loaders, feature extraction (ICI sequences, rhythm/tempo clustering,
+rubato drift, ornament detection), matplotlib figure scripts, JSON bundle builder, and
+web rendering modules.
+
+## Decisions
+
+| Date | Decision | Rationale | Linked roles |
+|---|---|---|---|
+| 2026-05-18 | Use the published feature extraction from `sw-combinatoriality` where it exists; only reimplement when needed for the JSON bundle or for verification | Don't re-derive published clustering from scratch unless we have to — risk of subtle reproduction drift. Cite the source script in code comments | [[qa]] [[arch]] |
+| 2026-05-18 | All notebooks in `notebooks/` are exploratory and one-concept-per-file (per CLAUDE.md layout); shippable code lives in `pipeline/` (Python) and `web/` (JS) | Keep exploration noise out of the production path | [[arch]] |
+| 2026-05-18 | **Pickle/CSV alignment**: Dataset 2 has 3840 rows and all four pickles (rhythms.p, ornaments.p, tempos-dict.p semantics aside, mean_codas.p shape-aside) are length 3840. They align 1:1 by zero-based row index with `pd.read_csv` (the source's `genfromtxt[1:]` slicing made this look off-by-one). Codified by `assert` in `pipeline.load.load_dataset2()`. | The off-by-one warning in REPRO_PLAN was wrong; verified empirically with `len(df) == len(rhythms) == 3840` | [[qa]] |
+| 2026-05-18 | **Tempo cluster assignment uses the paper's piecewise duration thresholds** {0.45, 0.61, 0.93, 1.08} from source notebook 4-rubato.ipynb's `return_tempo()` function, not the per-coda membership of `tempos-dict.p` (which is a 6-component GMM that misses 32 codas with d=0). | These thresholds are what the source itself uses downstream for rubato/ornament conditioning — they are the de facto canonical labels. | [[qa]] |
+| 2026-05-18 | **Rubato drift** computed as `duration(curr) − duration(prev_same_speaker_in_exchange)` with `prev` defined by source 4-rubato.ipynb: same REC root (first 9 chars), same Whale, within 6s of TsTo, abs(nClicks delta) < 3. Ornament-flagged codas have their final ICI subtracted before differencing. Result: mean |Δ|=0.050s on 2,653 codas — matches paper. | Direct port of source logic to vectorised pandas | [[qa]] |
+| 2026-05-18 | **PCA in browser** (web/embedding.js): implemented power-iteration with deflation on the 20×20 covariance of `[rhythm one-hot ⊕ log-duration ⊕ ornament]`. Each dimension is mean-centred and unit-scaled first so the log-duration doesn't drown the one-hots. | scipy in browser = bundler. Power iteration on 20×20 cov in ~100 iters is essentially instant. | [[arch]] |
+| 2026-05-18 | **v2 pseudocoda synthesis** = `centroid` (normalised cumulative ICI shape) → adjacent-difference → multiply by `tempo.mean_duration` → for repeat k, scale tempo by `1 + (k * rubato) / max(0.05, baseDur)` → if ornament, duplicate the final ICI. | Mirrors Sharma's four-axis decomposition exactly at the feature level. The `max(0.05, ...)` guards against absurdly tiny tempos that would explode the rubato factor. | [[ux]] |
+| 2026-05-18 | **v2 translation lattice distance**: default = Euclidean over the 20-D standardised feature vectors, with a toggle to cosine. Baseline reference is the median pairwise distance over 200 randomly-sampled natural codas, recomputed once per metric. Nearest-neighbour search is brute-force O(N·D) = O(3840·20) per prompt — sub-2ms. | Cosine ≈ angle, useful when magnitudes diverge across prompts. Brute force is fine at N=3840; KD-trees would add code without runtime payoff. | [[arch]] |
+| 2026-05-18 | **v2 token-stream unmask 1-NN predictor**: for each masked position, find the natural coda whose ICI sequence has the same length and minimises Euclidean distance over currently-visible positions. The predictor commits its ICI at the masked index. Confidence = `1 − distance / 0.15`, clamped to [0,1]. | The 0.15s normaliser is empirically calibrated against ICI variance in the natural cloud. Any natural neighbour within ~30 ms agreement reads as high confidence. | [[ux]] |
+| 2026-05-18 | **v2 Web Audio click synthesis**: per click, a 1 ms exponentially-decaying sine burst at 5 kHz. Amplitude peaks at 0.22 then exp-ramps to 0.0001 over 12 ms. Click train scheduled via `AudioContext.currentTime + cumulative-ICI`. Gaps of 0.20 s between repeats. | Matches the broadband-click impression at modest volume. Real sperm-whale clicks are ~10-20 kHz with multi-pulse structure; 5 kHz sine is the audible surrogate without trying to fool a marine biologist. | [[ux]] |
+
+## Dead Ends
+<!-- APPEND ONLY. Never delete. -->
+
+| Date | What was tried | Why it failed / was rejected |
+|---|---|---|
+
+## Lessons
+
+## Open Questions
+- [ ] Is `pandas.read_csv` enough for the annotated coda dataset, or is there a more idiomatic format in the source repo (e.g., MATLAB `.mat`, parquet)? — owner: [[dev]] — since: 2026-05-18
+- [ ] Ornament detection criterion from paper: "final click in a coda containing one more click than the nearest preceding or following coda within a window of ten seconds" — needs careful implementation; verify against paper's reported 4% rate — owner: [[qa]] — since: 2026-05-18
+
+## Assumptions
+- [Rhythm clustering uses normalised-cumulative ICI vectors padded to fixed length, with hierarchical clustering — but the exact linkage / distance is not yet verified] — status: untested — since: 2026-05-18
+- [Tempo clustering on absolute coda duration uses KDE + peak finding, not a parametric mixture — based on paper Fig 2A] — status: untested — since: 2026-05-18
+
+## Dependencies
+Blocked by: [[arch]] (JSON schema), inventory of sw-combinatoriality repo
+Feeds into: [[ux]] [[qa]]
+
+## Session Log
+- 2026-05-18 — Implementation scope and reuse-vs-reimplement principle recorded.
+- 2026-05-18 — Built pipeline/{load,features,colour,bundle,figures}.py + web/{app,exchange-plot,alphabet-grid,context-dist,embedding}.js. All four sections render. JSON bundles in data/derived/ total ~900kB.
+- 2026-05-18 — Added web/{v2-pseudocoda,v2-translation,v2-unmask}.js and extended app.js with hash-routed tab nav. styles.css adds tab-bar + range-input rules. No pipeline change. Cache-bust token now d0a1610d.

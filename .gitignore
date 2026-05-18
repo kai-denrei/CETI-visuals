@@ -1,0 +1,26 @@
+# Raw cloned data — never commit
+data/sw-combinatoriality/
+
+# Reference PDFs and saved-page assets (too heavy for the repo;
+# all are linked from CLAUDE.md / docstrings and freely available)
+s41467-024-47221-8.pdf
+miscCETI_Notes/
+
+# Server / runtime logs
+/tmp/ceti-server.log
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Matplotlib intermediate
+*.mplstyle.cache

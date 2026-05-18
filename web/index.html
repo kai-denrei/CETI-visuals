@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Phonetics of a Sperm Whale — a reproduction</title>
+<link rel="stylesheet" href="styles.css?v=d0a1610d" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="cb" content="d0a1610d">
+  <link rel="icon" type="image/svg+xml" href="public/cb-shapes/16.svg?v=d0a1610d">
+  <script src="public/cb-badge.js?v=d0a1610d" defer></script>
+</head>
+<body>
+<div class="page">
+
+<aside class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol id="toc-v1" class="toc-list">
+    <li><a href="#v1/exchange">The exchange</a></li>
+    <li><a href="#v1/grid">A phonetic alphabet</a></li>
+    <li><a href="#v1/context">Conditioning on context</a></li>
+    <li><a href="#v1/embedding">The repertoire, projected</a></li>
+  </ol>
+  <ol id="toc-v2" class="toc-list" hidden>
+    <li><a href="#v2/pseudocoda">Pseudocoda playground</a></li>
+    <li><a href="#v2/translation">Translation lattice</a></li>
+    <li><a href="#v2/unmask">Token-stream unmask</a></li>
+  </ol>
+  <dl class="meta" id="dataset-meta">
+    <dt>source</dt><dd>sw-combinatoriality</dd>
+    <dt>codas</dt><dd id="m-codas">—</dd>
+    <dt>exchanges</dt><dd id="m-exchanges">—</dd>
+    <dt>speakers</dt><dd id="m-speakers">—</dd>
+    <dt>ornament rate</dt><dd id="m-orn">—</dd>
+  </dl>
+</aside>
+
+<main>
+
+  <nav class="tab-bar" role="tablist" aria-label="Iterations">
+    <button id="tab-v1" class="tab-button is-active" role="tab" aria-selected="true" data-tab="v1">
+      <span class="tab-num">v1</span><span class="tab-label">combinatoriality</span>
+      <span class="tab-meta">Sharma et&nbsp;al. 2024</span>
+    </button>
+    <button id="tab-v2" class="tab-button" role="tab" aria-selected="false" data-tab="v2">
+      <span class="tab-num">v2</span><span class="tab-label">acoustic models</span>
+      <span class="tab-meta">Paradise et&nbsp;al. 2025 — WhAM</span>
+    </button>
+  </nav>
+
+  <!-- ============================ V1 GROUP ============================ -->
+  <div class="tab-pane" data-pane="v1">
+
+  <header class="cover">
+    <div class="eyebrow">CETI visuals — v1</div>
+    <h1>The Phonetics of a <em>Sperm Whale</em>,<br/>read from its codas.</h1>
+    <p class="lede">
+      Four short visual reproductions of Sharma et&nbsp;al. (2024). Each one tries
+      to make a single claim of the paper legible from the data alone: that what
+      sounds like a single click pattern is in fact a four-axis system —
+      <em>rhythm</em>, <em>tempo</em>, <em>rubato</em>, <em>ornamentation</em> —
+      and that those axes combine into a much larger vocabulary than was first
+      catalogued.
+    </p>
+    <p class="citation">
+      Sharma, P.&nbsp;et&nbsp;al. <em>Contextual and Combinatorial Structure in
+      Sperm Whale Vocalisations.</em> Nat. Commun. (2024). Data: Project&nbsp;CETI
+      EC-1, 2005&ndash;2018.
+    </p>
+  </header>
+
+  <!-- 1. EXCHANGE PLOT -->
+  <section class="visual" id="v1/exchange">
+    <header>
+      <h2><span class="num">Section 01 — headline</span>The exchange</h2>
+      <p class="blurb">
+        An exchange is two whales overlapping each other for a few minutes. Each
+        coda is a small staircase of clicks; the vertical axis is wall-clock
+        time, the horizontal axis is the click index inside the coda. When you
+        line up consecutive codas of the same speaker, two things become
+        visible: <em>rubato</em> — the gentle tempo drift between adjacent codas
+        — and <em>ornamentation</em> — a single extra click tacked onto the
+        end. Both are conversational, not stylistic.
+      </p>
+    </header>
+
+    <div class="controls">
+      <label>exchange
+        <select id="ex-select"></select>
+      </label>
+      <label>
+        <input type="checkbox" id="ex-rubato" checked />
+        rubato connectors
+      </label>
+      <label>
+        <input type="checkbox" id="ex-ornament" checked />
+        highlight ornaments
+      </label>
+      <span style="flex: 1"></span>
+      <span id="ex-summary" style="color: var(--muted);"></span>
+    </div>
+
+    <div class="viz-frame" id="ex-frame">
+      <canvas id="exchange-canvas" width="900" height="640"></canvas>
+      <div class="tooltip" id="ex-tooltip" style="opacity: 0;"></div>
+    </div>
+    <div class="legend" id="ex-legend"></div>
+    <p class="caption">
+      One coda = one staircase. Caller&nbsp;A in <span class="mono" style="color:#3b82c4">paper&nbsp;blue</span>,
+      Caller&nbsp;B in <span class="mono" style="color:#e08a3c">paper&nbsp;orange</span>.
+      A circle&nbsp;◯ marks an ornament. Hover any click for its ICI in
+      milliseconds.
+    </p>
+  </section>
+
+  <!-- 2. PHONETIC ALPHABET GRID -->
+  <section class="visual" id="v1/grid">
+    <header>
+      <h2><span class="num">Section 02 — combinatorics</span>A phonetic alphabet</h2>
+      <p class="blurb">
+        Project every coda onto its rhythm cluster (18 of them) and its tempo
+        cluster (5 of them). The resulting 18&nbsp;&times;&nbsp;5 grid is the
+        paper's headline arithmetic — the larger inventory the four axes
+        permit. Each cell carries its raw coda count, its ornament rate, and
+        the mean magnitude of rubato drift inside it. Hover a cell to highlight
+        the exchanges that contain its codas in the section above.
+      </p>
+    </header>
+    <div class="viz-frame" id="grid-frame">
+      <svg id="grid-svg" viewBox="0 0 760 720" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="tooltip" id="grid-tooltip" style="opacity: 0;"></div>
+    </div>
+    <p class="caption">
+      Cell shading uses <span class="mono">log(count&nbsp;+&nbsp;1)</span>. Inset
+      pies show <span class="mono">orn&nbsp;%</span> (amber)
+      and <span class="mono">|Δ&nbsp;rubato|</span> proxy (teal, longer arc = more
+      tempo modulation in that cell).
+    </p>
+  </section>
+
+  <!-- 3. CONTEXT-CONDITIONAL DISTRIBUTIONS -->
+  <section class="visual" id="v1/context">
+    <header>
+      <h2><span class="num">Section 03 — context dependency</span>Conditioning on context</h2>
+      <p class="blurb">
+        Rhythm and tempo are largely context-independent. Rubato and ornament
+        are not — they depend on what the partner just said. The left panel
+        shows the distribution of <em>rubato drift</em>, the duration delta
+        between two successive same-speaker codas. The right panel shows the
+        ratio of last-ICI to median-preceding-ICI, separating plain from
+        ornamented codas. The toggle restricts to same-tempo-cluster pairs.
+      </p>
+    </header>
+    <div class="controls">
+      <label>
+        <input type="checkbox" id="ctx-same-tempo" />
+        restrict to same tempo cluster
+      </label>
+    </div>
+    <div class="viz-frame" id="context-frame">
+      <svg id="context-svg" viewBox="0 0 920 360" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <p class="caption">
+      Rubato drift centred on zero; ornament codas have a distinctly longer
+      final ICI. Both are downstream of the conversational partner.
+    </p>
+  </section>
+
+  <!-- 4. 2D EMBEDDING -->
+  <section class="visual" id="v1/embedding">
+    <header>
+      <h2><span class="num">Section 04 — repertoire</span>The repertoire, projected</h2>
+      <p class="blurb">
+        A linear projection of every coda into two dimensions, using only its
+        rhythm one-hot, its log-duration, and its ornament flag. PCA is the
+        honest minimum here; the goal is not faithful manifold structure but a
+        visible separation of the 18-rhythm families. Colour by tempo cluster.
+      </p>
+    </header>
+    <div class="controls">
+      <label>colour by
+        <select id="emb-colour-by">
+          <option value="tempo">tempo cluster</option>
+          <option value="rhythm">rhythm cluster</option>
+          <option value="ornament">ornament</option>
+          <option value="speaker">speaker</option>
+        </select>
+      </label>
+    </div>
+    <div class="viz-frame" id="emb-frame">
+      <canvas id="embedding-canvas" width="900" height="560"></canvas>
+      <div class="tooltip" id="emb-tooltip" style="opacity: 0;"></div>
+    </div>
+    <p class="caption">
+      Each point is a coda. PCA-2 on
+      <span class="mono">[rhythm one-hot ⊕ log-duration ⊕ ornament]</span>.
+    </p>
+  </section>
+
+  </div><!-- /v1 pane -->
+
+  <!-- ============================ V2 GROUP ============================ -->
+  <div class="tab-pane" data-pane="v2" hidden>
+
+  <header class="cover">
+    <div class="eyebrow">CETI visuals — v2</div>
+    <h1>The <em>Whale Acoustics Model</em>,<br/>read from its tokens.</h1>
+    <p class="lede">
+      Three counterparts to the WhAM paper. Where v1 reads codas as discrete
+      categories, WhAM reads them as audio token sequences and trains a
+      transformer to predict, translate, and generate them. The visuals here
+      operationalise the three moves WhAM makes:
+      <em>generation</em> from latent control, <em>translation</em> from foreign
+      acoustic prompts, and <em>iterative unmasking</em> of partially-revealed
+      sequences. None of this runs a real transformer in the browser — the goal
+      is to make each move legible from a small surrogate.
+    </p>
+    <p class="citation">
+      Paradise, O.&nbsp;et&nbsp;al. <em>WhAM: Towards A Translative Model of
+      Sperm Whale Vocalization.</em> NeurIPS 2025 (arXiv:2512.02206).
+      Visuals are <em>conceptual</em>, not model outputs.
+    </p>
+  </header>
+
+  <!-- 1. PSEUDOCODA PLAYGROUND -->
+  <section class="visual" id="v2/pseudocoda">
+    <header>
+      <h2><span class="num">Section 01 — generation</span>Pseudocoda playground</h2>
+      <p class="blurb">
+        WhAM samples from a learned acoustic distribution. Here we expose the
+        four axes from Sharma et&nbsp;al. as direct controls and compose the
+        ICI sequence by hand: pick a rhythm shape (normalised cumulative ICI
+        centroid), scale by tempo, drift each repeat by a fixed rubato, optionally
+        append an ornament click. This is the <em>feature-level</em> analogue of
+        WhAM's generation pipeline — what changes when you turn each knob.
+      </p>
+    </header>
+    <div class="controls">
+      <label>rhythm
+        <select id="ps-rhythm"></select>
+      </label>
+      <label>tempo
+        <select id="ps-tempo"></select>
+      </label>
+      <label>rubato drift
+        <input type="range" id="ps-rubato" min="-0.30" max="0.30" step="0.01" value="0.05" />
+        <span class="mono" id="ps-rubato-val">+0.05 s</span>
+      </label>
+      <label>
+        <input type="checkbox" id="ps-ornament" />
+        ornament
+      </label>
+      <label>repeats
+        <input type="range" id="ps-repeats" min="1" max="8" step="1" value="3" />
+        <span class="mono" id="ps-repeats-val">3</span>
+      </label>
+      <span style="flex: 1"></span>
+      <button id="ps-play" type="button">▶ play</button>
+    </div>
+    <div class="viz-frame" id="ps-frame">
+      <canvas id="pseudocoda-canvas" width="900" height="420"></canvas>
+      <div class="tooltip" id="ps-tooltip" style="opacity: 0;"></div>
+    </div>
+    <p class="caption">
+      Each staircase is one synthetic coda. Across repeats, the tempo drifts by
+      <span class="mono">±rubato</span> seconds per repeat. The ornament toggle
+      duplicates the final ICI as a trailing click. Audio = 1&nbsp;ms exponentially
+      decaying sine bursts at 5&nbsp;kHz, played at the ICI timestamps.
+    </p>
+  </section>
+
+  <!-- 2. TRANSLATION LATTICE -->
+  <section class="visual" id="v2/translation">
+    <header>
+      <h2><span class="num">Section 02 — translation</span>Translation lattice</h2>
+      <p class="blurb">
+        WhAM translates non-coda audio into coda acoustic style; the Fréchet
+        Audio Distance to natural codas drops dramatically. We can't run the
+        model in the browser, but we can pose the geometric question: given a
+        few synthetic input prompts in feature space, where does each one land
+        when projected onto the nearest natural-coda neighbourhood? The dotted
+        baseline is the median pairwise distance among natural codas — the
+        threshold below which WhAM's output is FAD-indistinguishable.
+      </p>
+    </header>
+    <div class="controls">
+      <label>
+        <input type="checkbox" id="tx-translate" />
+        translate
+      </label>
+      <label>distance
+        <select id="tx-metric">
+          <option value="euclid">euclidean</option>
+          <option value="cosine">cosine</option>
+        </select>
+      </label>
+      <span style="flex: 1"></span>
+      <span id="tx-summary" style="color: var(--muted);"></span>
+    </div>
+    <div class="viz-frame" id="tx-frame">
+      <canvas id="translation-canvas" width="900" height="520"></canvas>
+      <div class="tooltip" id="tx-tooltip" style="opacity: 0;"></div>
+    </div>
+    <p class="caption">
+      Background grey = natural-coda PCA cloud (same projection as v1
+      §4). Foreground markers = synthetic input prompts. With <em>translate</em>
+      off, each prompt sits in its own corner of feature space. On, each animates
+      to its nearest natural-coda neighbour; the diamond is the post-translation
+      position, the line is the path.
+    </p>
+  </section>
+
+  <!-- 3. TOKEN-STREAM UNMASK -->
+  <section class="visual" id="v2/unmask">
+    <header>
+      <h2><span class="num">Section 03 — iterative unmask</span>Token-stream unmask</h2>
+      <p class="blurb">
+        VampNet (WhAM's base) tokenises audio, masks a random subset of tokens,
+        and generates the missing ones via iterative parallel decoding — each
+        step fills the most-confident positions first. Here we run the same loop
+        at the ICI level: take a real coda, mask 40 % of its positions, and
+        fill them one round at a time using the natural-coda cloud as a
+        nearest-neighbour oracle. The certainty heat-strip below the tiles shows
+        how confident the predictor is at each remaining masked position.
+      </p>
+    </header>
+    <div class="controls">
+      <label>coda
+        <select id="um-coda"></select>
+      </label>
+      <button id="um-mask" type="button">mask 40&nbsp;%</button>
+      <button id="um-step" type="button">step</button>
+      <button id="um-reset" type="button">reset</button>
+      <span style="flex: 1"></span>
+      <span id="um-summary" style="color: var(--muted);"></span>
+    </div>
+    <div class="viz-frame" id="um-frame">
+      <canvas id="unmask-canvas" width="900" height="320"></canvas>
+      <div class="tooltip" id="um-tooltip" style="opacity: 0;"></div>
+    </div>
+    <p class="caption">
+      One tile per click position; colour bins the ICI (faster = blue, slower =
+      amber). Grey tiles are masked. Each <em>step</em> reveals the most-confident
+      masked positions in parallel; below, the certainty strip
+      (1&nbsp;−&nbsp;normalised distance) shrinks as the predictor commits.
+    </p>
+  </section>
+
+  </div><!-- /v2 pane -->
+
+  <footer class="foot">
+    Reproduction of Sharma et&nbsp;al. 2024 from the public
+    <span class="mono">sw-combinatoriality</span> bundle (CC&nbsp;BY-4.0 data).
+    v2 visuals are conceptual surrogates for Paradise et&nbsp;al. 2025 (WhAM)
+    and do not invoke any real model. No external assets, no framework, no
+    build step. Source figures are at <span class="mono">./figures/</span>;
+    this page reads from <span class="mono">./data/derived/*.json</span>.
+  </footer>
+
+</main>
+</div>
+
+<script type="module" src="app.js?v=d0a1610d"></script>
+</body>
+</html>
