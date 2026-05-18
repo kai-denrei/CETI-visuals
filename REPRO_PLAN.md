@@ -108,3 +108,39 @@ Open scope question for Gerald, default answers in brackets:
 - Sliders that re-cluster on the fly, or hover/brush only? **[brush + hover]**
 - Audio playback in v1? **[no, defer to v1.1]**
 - Single-page or multi-page? **[single page, scroll]**
+
+## v3 — hydroacoustics (planned, surfaced 2026-05-18)
+
+v3 adds a third tab — **hydroacoustics** — placing the CETI dataset in the canonical
+hydroacoustic-display vocabulary (per `HYDROACOUSTICS.md`). Three sections, each driven by
+a single shared `PlaybackClock` so the page feels alive but is fully pausable:
+
+1. **Click-train rasterplot with live playhead.** Canvas 2D. Per-exchange view: each coda is
+   a horizontal lane, each click is a tick on that lane. A vertical playhead sweeps left-to-
+   right at the global speed, brightening any tick it crosses and decaying it over ~300 ms.
+   Optional Web Audio click train (opt-in, user-gesture only, reusing the 5 kHz exp-decay
+   recipe from `v2-pseudocoda.js`). Reuses `exchanges.json` unchanged.
+
+2. **LTSA-style corpus heat-clock.** SVG. Extends `pipeline/bundle.py` to emit
+   `corpus_timeline.json` from `DominicaCodas.csv` (Dataset 1, 8,719 codas, 2005-2018).
+   Dataset 1 has `Date` (DD/MM/YYYY) but no time-of-day, so the LTSA reduces to a 2-D
+   density grid: X = year×month (156 columns across 13 years), Y = day-of-week (7 rows).
+   Cell shading = `log(count + 1)`, baked through an OKLCH magma-like ramp (extending
+   `pipeline/colour.py`). Caption flags the limitation explicitly. An auto-advancing month
+   cursor highlights the current column and shows the year/month label plus coda count.
+
+3. **PPI rotating sonar sweep.** Canvas 2D. 18 spokes (one per rhythm cluster, mapped to
+   bearings 0-360°), constant 6 rpm. Spoke intensity = sliding-window count of codas in
+   that rhythm cluster as the global clock scrubs through the deployment timeline.
+   Alpha-decay trail for persistence. Stylised, not a real bearing-array output —
+   caption is honest about this.
+
+Shared clock module (`web/v3-clock.js`) exports a `PlaybackClock` singleton with
+`play / pause / toggle / setSpeed / setCursor / subscribe`, RAF-driven. UI controls live
+above the v3 sections: play/pause button, speed selector (0.5× / 1× / 2× / 4×), master
+scrubber, and a monospace date readout. Sections subscribe on mount and unsubscribe on
+tab hide to save battery.
+
+Architecture rules: vanilla ESM, canvas/SVG only, no bundler. v1 and v2 modules untouched.
+Tab router stays hash-based (`#v3`, `#v3/rasterplot`, etc.). AudioContext created on first
+user gesture in §1 only. Perceptually uniform colour ramps only — no jet/rainbow.
