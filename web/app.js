@@ -1,6 +1,7 @@
 // CETI-visuals — entry point.
-// Loads the three JSON bundles, mounts each section module, wires the v1/v2
-// tab bar. Tab + section state lives in location.hash, e.g. #v2/pseudocoda.
+// Loads the JSON bundles, mounts each section module, wires the v1/v2/v3 tab
+// bar. Tab + section state lives in location.hash, e.g. #v2/pseudocoda or
+// #v3/ltsa.
 
 import { mountExchange } from "./exchange-plot.js";
 import { mountGrid } from "./alphabet-grid.js";
@@ -11,19 +12,28 @@ import { mountPseudocoda } from "./v2-pseudocoda.js";
 import { mountTranslation } from "./v2-translation.js";
 import { mountUnmask } from "./v2-unmask.js";
 
+import { clock, TIMELINE, cursorToYearMonth } from "./v3-clock.js";
+import { mountRasterplot } from "./v3-rasterplot.js";
+import { mountLtsa } from "./v3-ltsa.js";
+import { mountPpi } from "./v3-ppi.js";
+
 const BASE = "../data/derived/";
 
-async function loadJSON(name) {
+async function loadJSON(name, optional = false) {
   const r = await fetch(BASE + name, { cache: "no-store" });
-  if (!r.ok) throw new Error(`Failed to fetch ${name}: ${r.status}`);
+  if (!r.ok) {
+    if (optional) return null;
+    throw new Error(`Failed to fetch ${name}: ${r.status}`);
+  }
   return r.json();
 }
 
 async function main() {
-  const [codas, exchanges, clusters] = await Promise.all([
+  const [codas, exchanges, clusters, timeline] = await Promise.all([
     loadJSON("codas.json"),
     loadJSON("exchanges.json"),
     loadJSON("clusters.json"),
+    loadJSON("corpus_timeline.json", true),
   ]);
 
   const codaById = new Map(codas.map(c => [c.id, c]));
@@ -37,7 +47,7 @@ async function main() {
     (clusters.ornament_rate * 100).toFixed(2) + "%";
 
   const bus = new EventTarget();
-  const ctx = { codas, exchanges, clusters, codaById, bus };
+  const ctx = { codas, exchanges, clusters, codaById, bus, timeline };
 
   // v1 modules
   mountExchange(ctx);
@@ -50,50 +60,103 @@ async function main() {
   mountTranslation(ctx);
   mountUnmask(ctx);
 
+  // v3 modules — keep handles so we can attach/detach on tab switch.
+  const v3Modules = [
+    mountRasterplot(ctx),
+    mountLtsa(ctx),
+    mountPpi(ctx),
+  ].filter(Boolean);
+
+  // ---- v3 clock UI wiring -------------------------------------------------
+  const playBtn = document.getElementById("v3-playpause");
+  const speedBtns = document.querySelectorAll(".v3-speed button");
+  const scrubber = document.getElementById("v3-scrubber");
+  const readout = document.getElementById("v3-readout");
+
+  if (playBtn && scrubber && readout) {
+    playBtn.addEventListener("click", () => clock.toggle());
+    speedBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const x = parseFloat(btn.dataset.speed);
+        clock.setSpeed(x);
+        speedBtns.forEach(b => b.classList.toggle("is-active", b === btn));
+      });
+    });
+    scrubber.addEventListener("input", () => {
+      clock.setCursor(parseFloat(scrubber.value) / 1000);
+    });
+    // Top-level subscriber to drive the chrome.
+    clock.subscribe(state => {
+      playBtn.textContent = state.playing ? "❚❚" : "▶";
+      playBtn.classList.toggle("is-on", state.playing);
+      // Avoid overwriting user-drag input — only update slider if it differs.
+      const v = Math.round(state.cursor * 1000);
+      if (parseInt(scrubber.value, 10) !== v) scrubber.value = String(v);
+      readout.textContent = cursorToYearMonth(state.cursor);
+    });
+  }
+
   // Tab routing -------------------------------------------------------------
-  const v1Pane = document.querySelector('[data-pane="v1"]');
-  const v2Pane = document.querySelector('[data-pane="v2"]');
-  const tocV1 = document.getElementById("toc-v1");
-  const tocV2 = document.getElementById("toc-v2");
-  const tabV1 = document.getElementById("tab-v1");
-  const tabV2 = document.getElementById("tab-v2");
+  const panes = {
+    v1: document.querySelector('[data-pane="v1"]'),
+    v2: document.querySelector('[data-pane="v2"]'),
+    v3: document.querySelector('[data-pane="v3"]'),
+  };
+  const tocs = {
+    v1: document.getElementById("toc-v1"),
+    v2: document.getElementById("toc-v2"),
+    v3: document.getElementById("toc-v3"),
+  };
+  const tabs = {
+    v1: document.getElementById("tab-v1"),
+    v2: document.getElementById("tab-v2"),
+    v3: document.getElementById("tab-v3"),
+  };
+
+  let activeTab = "v1";
 
   function setTab(tab, scrollTarget) {
-    const isV2 = tab === "v2";
-    v1Pane.hidden = isV2;
-    v2Pane.hidden = !isV2;
-    tocV1.hidden = isV2;
-    tocV2.hidden = !isV2;
-    tabV1.classList.toggle("is-active", !isV2);
-    tabV2.classList.toggle("is-active", isV2);
-    tabV1.setAttribute("aria-selected", String(!isV2));
-    tabV2.setAttribute("aria-selected", String(isV2));
+    activeTab = tab;
+    for (const k of Object.keys(panes)) {
+      const isActive = k === tab;
+      if (panes[k]) panes[k].hidden = !isActive;
+      if (tocs[k]) tocs[k].hidden = !isActive;
+      if (tabs[k]) {
+        tabs[k].classList.toggle("is-active", isActive);
+        tabs[k].setAttribute("aria-selected", String(isActive));
+      }
+    }
+    // v3 subscription gates — only attach when visible so hidden tabs don't
+    // burn cycles.
+    if (tab === "v3") {
+      v3Modules.forEach(m => m.attach && m.attach());
+    } else {
+      v3Modules.forEach(m => m.detach && m.detach());
+      // Auto-pause when leaving v3 — playback should not run invisibly.
+      clock.pause();
+    }
     if (scrollTarget) {
       const el = document.getElementById(scrollTarget);
       if (el) el.scrollIntoView({ behavior: "auto", block: "start" });
     }
-    // Trigger a resize so canvas modules reflow to their (now visible) widths
+    // Trigger a resize so canvas modules reflow to their (now visible) widths.
     window.dispatchEvent(new Event("resize"));
   }
 
   function applyHash() {
     const h = location.hash.replace(/^#/, "");
-    // Forms: "v1", "v2", "v1/exchange", "v2/pseudocoda" (no slash = tab only)
     let tab = "v1", target = null;
-    if (h.startsWith("v2")) tab = "v2";
-    if (h.includes("/")) target = h;  // e.g. "v2/pseudocoda" is the section id
+    if (h.startsWith("v3")) tab = "v3";
+    else if (h.startsWith("v2")) tab = "v2";
+    if (h.includes("/")) target = h;
     setTab(tab, target);
   }
 
-  tabV1.addEventListener("click", () => {
-    location.hash = "v1";
-  });
-  tabV2.addEventListener("click", () => {
-    location.hash = "v2";
-  });
+  tabs.v1.addEventListener("click", () => { location.hash = "v1"; });
+  tabs.v2.addEventListener("click", () => { location.hash = "v2"; });
+  if (tabs.v3) tabs.v3.addEventListener("click", () => { location.hash = "v3"; });
   window.addEventListener("hashchange", applyHash);
 
-  // Set initial tab from hash; if none, default to v1.
   applyHash();
 }
 

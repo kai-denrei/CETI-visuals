@@ -4,13 +4,13 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>The Phonetics of a Sperm Whale — a reproduction</title>
-<link rel="stylesheet" href="styles.css?v=d0a1610d" />
+<link rel="stylesheet" href="styles.css?v=0215de45" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="cb" content="d0a1610d">
-  <link rel="icon" type="image/svg+xml" href="public/cb-shapes/16.svg?v=d0a1610d">
-  <script src="public/cb-badge.js?v=d0a1610d" defer></script>
+  <meta name="cb" content="0215de45">
+  <link rel="icon" type="image/svg+xml" href="public/cb-shapes/02.svg?v=0215de45">
+  <script src="public/cb-badge.js?v=0215de45" defer></script>
 </head>
 <body>
 <div class="page">
@@ -27,6 +27,11 @@
     <li><a href="#v2/pseudocoda">Pseudocoda playground</a></li>
     <li><a href="#v2/translation">Translation lattice</a></li>
     <li><a href="#v2/unmask">Token-stream unmask</a></li>
+  </ol>
+  <ol id="toc-v3" class="toc-list" hidden>
+    <li><a href="#v3/rasterplot">Click-train rasterplot</a></li>
+    <li><a href="#v3/ltsa">LTSA corpus heat-clock</a></li>
+    <li><a href="#v3/ppi">PPI sonar sweep</a></li>
   </ol>
   <dl class="meta" id="dataset-meta">
     <dt>source</dt><dd>sw-combinatoriality</dd>
@@ -47,6 +52,10 @@
     <button id="tab-v2" class="tab-button" role="tab" aria-selected="false" data-tab="v2">
       <span class="tab-num">v2</span><span class="tab-label">acoustic models</span>
       <span class="tab-meta">Paradise et&nbsp;al. 2025 — WhAM</span>
+    </button>
+    <button id="tab-v3" class="tab-button" role="tab" aria-selected="false" data-tab="v3">
+      <span class="tab-num">v3</span><span class="tab-label">hydroacoustics</span>
+      <span class="tab-meta">live · pausable · 2005&ndash;2018</span>
     </button>
   </nav>
 
@@ -350,6 +359,132 @@
 
   </div><!-- /v2 pane -->
 
+  <!-- ============================ V3 GROUP ============================ -->
+  <div class="tab-pane" data-pane="v3" hidden>
+
+  <header class="cover">
+    <div class="eyebrow">CETI visuals — v3</div>
+    <h1>The <em>hydroacoustic frame</em>,<br/>read across the deployment.</h1>
+    <p class="lede">
+      Three canonical hydroacoustic displays, applied to the EC-1 coda corpus.
+      A single playback clock sweeps the 2005&ndash;2018 record across all
+      three views at once: a click-train rasterplot makes each exchange feel
+      alive, an LTSA-style heat-clock collapses 8,719 codas into a 13-year
+      density grid, and a stylised PPI sweep tracks which rhythm clusters
+      dominate as the deployment unfolds. Pausable; speed-controllable;
+      audio is opt-in.
+    </p>
+    <p class="citation">
+      Display vocabulary per <em>HYDROACOUSTICS.md</em>. Source data:
+      Project&nbsp;CETI EC-1 corpus (Sharma et&nbsp;al., 2024). No PII; no
+      framework; vanilla&nbsp;ES modules with canvas&nbsp;2D and SVG.
+    </p>
+  </header>
+
+  <!-- Sticky playback clock controls -->
+  <div class="v3-clockbar" id="v3-clockbar">
+    <button id="v3-playpause" class="v3-playbtn" type="button" aria-label="play/pause">▶</button>
+    <div class="v3-speed" role="group" aria-label="playback speed">
+      <button data-speed="0.5" type="button">0.5×</button>
+      <button data-speed="1" type="button" class="is-active">1×</button>
+      <button data-speed="2" type="button">2×</button>
+      <button data-speed="4" type="button">4×</button>
+    </div>
+    <input id="v3-scrubber" type="range" min="0" max="1000" step="1" value="0" />
+    <span id="v3-readout" class="mono">2005-01</span>
+  </div>
+
+  <!-- 1. CLICK-TRAIN RASTERPLOT -->
+  <section class="visual" id="v3/rasterplot">
+    <header>
+      <h2><span class="num">Section 01 — exchange-scale</span>Click-train rasterplot</h2>
+      <p class="blurb">
+        One coda = one horizontal lane. Each click on that coda is a vertical
+        tick positioned by its cumulative ICI. The teal playhead sweeps
+        left-to-right at the global tempo; as it crosses each tick, the tick
+        flashes and decays over about 300&nbsp;ms. The result is a tactile
+        view of how exchanges unfold in real time — speakers overlapping,
+        ornaments tagging the tail of a coda, rubato visible as tempo drift
+        across consecutive same-colour lanes.
+      </p>
+    </header>
+    <div class="controls">
+      <label>exchange
+        <select id="rp-select"></select>
+      </label>
+      <button id="rp-audio" type="button">♪ audio off</button>
+      <span style="flex: 1"></span>
+      <span id="rp-summary" style="color: var(--muted);"></span>
+    </div>
+    <div class="viz-frame" id="rp-frame">
+      <canvas id="rasterplot-canvas" width="900" height="320"></canvas>
+      <div class="tooltip" id="rp-tooltip" style="opacity: 0;"></div>
+    </div>
+    <p class="caption">
+      Caller&nbsp;A in <span class="mono" style="color:#3b82c4">paper&nbsp;blue</span>,
+      Caller&nbsp;B in <span class="mono" style="color:#e08a3c">paper&nbsp;orange</span>.
+      Amber rings flag ornamented coda tails. The audio toggle synthesises a
+      5&nbsp;kHz exp-decay click per tick — opt-in, scheduled from the same
+      cursor as the playhead.
+    </p>
+  </section>
+
+  <!-- 2. LTSA CORPUS HEAT-CLOCK -->
+  <section class="visual" id="v3/ltsa">
+    <header>
+      <h2><span class="num">Section 02 — corpus-scale</span>LTSA corpus heat-clock</h2>
+      <p class="blurb">
+        Long-Term Spectral Average is the canonical hydroacoustic move for
+        collapsing a long deployment into a single readable frame. Dataset&nbsp;1
+        of <em>sw-combinatoriality</em> carries the calendar Date for each of
+        its 8,719 codas but no time-of-day, so the LTSA here reduces to a 2-D
+        density: months across (2005&ndash;2017, 156 columns), day-of-week
+        down (Mon&ndash;Sun). The teal cursor sweeps left-to-right at the
+        global tempo; click any cell to jump.
+      </p>
+    </header>
+    <div class="controls">
+      <span id="ltsa-summary" style="color: var(--muted);"></span>
+    </div>
+    <div class="viz-frame" id="ltsa-frame">
+      <svg id="ltsa-svg" viewBox="0 0 1100 320" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <p class="caption">
+      Cell shading = <span class="mono">log(count&nbsp;+&nbsp;1)</span>, baked
+      through an OKLCH magma-like ramp (perceptually uniform — no rainbow).
+      Dataset&nbsp;1 carries date but not time-of-day; LTSA reduces to
+      deployment-month density.
+    </p>
+  </section>
+
+  <!-- 3. PPI ROTATING SONAR SWEEP -->
+  <section class="visual" id="v3/ppi">
+    <header>
+      <h2><span class="num">Section 03 — categorical</span>PPI sonar sweep</h2>
+      <p class="blurb">
+        Plan Position Indicator: a rotating radar-style sweep. Eighteen spokes,
+        one per rhythm cluster, distributed uniformly around the bearing
+        circle. Spoke length = number of codas in that rhythm cluster within
+        a sliding window centred on the global clock cursor. The sweep
+        rotates at six rpm (one full revolution per ten seconds at 1×),
+        leaving a teal alpha-decay trail.
+      </p>
+    </header>
+    <div class="controls">
+      <span id="ppi-summary" style="color: var(--muted);"></span>
+    </div>
+    <div class="viz-frame" id="ppi-frame">
+      <canvas id="ppi-canvas" width="900" height="380"></canvas>
+    </div>
+    <p class="caption">
+      Stylised PPI. Rhythm clusters are mapped to bearing for visualisation —
+      not a real bearing-array output. The sweep timing is the deployment
+      timeline scrubbing through the dataset.
+    </p>
+  </section>
+
+  </div><!-- /v3 pane -->
+
   <footer class="foot">
     Reproduction of Sharma et&nbsp;al. 2024 from the public
     <span class="mono">sw-combinatoriality</span> bundle (CC&nbsp;BY-4.0 data).
@@ -362,6 +497,6 @@
 </main>
 </div>
 
-<script type="module" src="app.js?v=d0a1610d"></script>
+<script type="module" src="app.js?v=0215de45"></script>
 </body>
 </html>

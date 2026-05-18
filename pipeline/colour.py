@@ -70,6 +70,37 @@ CALLER_COLOURS = {
 CALLER_EXTENDED = ["#3b82c4", "#e08a3c"] + rhythm_palette(11)[2:]
 
 
+def magma_like_ramp(n: int = 32) -> list[str]:
+    """OKLCH-walked ramp that approximates matplotlib's magma — perceptually uniform,
+    monotone lightness, hue rotating dark-purple → magenta → orange → pale-yellow.
+
+    Used by the v3 LTSA heatmap. The endpoints are deliberately not pure-black or
+    pure-white so it sits on the editorial near-black background without harsh edges.
+    HYDROACOUSTICS.md mandates perceptually uniform — no jet, no rainbow.
+    """
+    out = []
+    for i in range(n):
+        t = i / max(1, n - 1)
+        # Lightness: 0.10 (deep) → 0.92 (warm pale), slight ease-out
+        L = 0.10 + (0.92 - 0.10) * (t ** 0.85)
+        # Chroma: low at the dark end, peaks mid-ramp, fades at the pale end
+        C = 0.04 + 0.16 * (1 - (2 * t - 1) ** 2)
+        # Hue: 290° (deep violet) → 30° (warm orange/amber). Walk through magenta.
+        H = (290 + (30 - 290 + 360) * t) % 360
+        out.append(oklch_to_srgb_hex(L, C, H))
+    return out
+
+
+def ramp_lookup(value: float, ramp: list[str]) -> str:
+    """Pick a colour from a ramp at normalised value v in [0, 1]."""
+    if value <= 0:
+        return ramp[0]
+    if value >= 1:
+        return ramp[-1]
+    idx = int(round(value * (len(ramp) - 1)))
+    return ramp[idx]
+
+
 if __name__ == "__main__":
     print("rhythm palette (18):")
     for h in rhythm_palette():

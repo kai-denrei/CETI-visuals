@@ -1,8 +1,9 @@
-"""Emit the three JSON bundles consumed by the web layer.
+"""Emit the JSON bundles consumed by the web layer.
 
-  - codas.json      one row per Dataset-2 coda
-  - exchanges.json  one row per exchange
-  - clusters.json   rhythm centroids (18), tempo centroids (5), colour palettes
+  - codas.json             one row per Dataset-2 coda (v1/v2)
+  - exchanges.json         one row per exchange (v1/v2)
+  - clusters.json          rhythm centroids (18), tempo centroids (5), colour palettes
+  - corpus_timeline.json   v3 LTSA-style heat-clock derived from Dataset 1 (Date column)
 """
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 
 from pipeline import colour
 from pipeline.features import (
@@ -21,6 +23,7 @@ from pipeline.features import (
 )
 from pipeline.load import (
     REPO,
+    load_dataset1,
     load_dataset2,
     load_rhythm_centroids,
     load_tempos_dict,
@@ -111,6 +114,82 @@ def build_clusters(df) -> dict:
     }
 
 
+def build_corpus_timeline() -> dict:
+    """v3 LTSA-style corpus heat-clock from Dataset 1 (DominicaCodas.csv).
+
+    Dataset 1 carries `Date` (DD/MM/YYYY) but no time-of-day. We therefore reduce
+    the LTSA to a 2-D density grid:
+      - X axis: year × month, 156 columns across 2005-01..2017-12 inclusive
+        (Dataset 1 spans 2005-03 .. 2017-11 in practice; we pad to whole years
+        so the cursor sweep stays uniform).
+      - Y axis: day-of-week, 7 rows (Mon=0 .. Sun=6).
+
+    Cell value = raw coda count. The web layer applies log(count+1) and looks up
+    a baked OKLCH magma-like ramp. The current month column is highlighted by the
+    global playback clock cursor.
+    """
+    df = load_dataset1()
+    # Dataset 1 mixes two formats: DD/MM/YYYY (2005-2014) and DD-MM-YYYY (2014-2017).
+    # Try slash first, then fill remaining with dash.
+    dates_a = pd.to_datetime(df["Date"], format="%d/%m/%Y", errors="coerce")
+    dates_b = pd.to_datetime(df["Date"], format="%d-%m-%Y", errors="coerce")
+    dates = dates_a.fillna(dates_b)
+    if dates.isna().any():
+        n_bad = int(dates.isna().sum())
+        print(f"  WARN: {n_bad} rows with unparseable Date; dropped from timeline")
+    valid = dates.dropna()
+
+    years = valid.dt.year.to_numpy()
+    months = valid.dt.month.to_numpy()
+    dows = valid.dt.dayofweek.to_numpy()  # Mon=0 .. Sun=6
+
+    # X axis labels: pad to whole years across the data extent.
+    y_min = int(years.min())
+    y_max = int(years.max())
+    x_cols = []
+    for y in range(y_min, y_max + 1):
+        for m in range(1, 13):
+            x_cols.append({"year": y, "month": m, "label": f"{y}-{m:02d}"})
+    col_index = {(c["year"], c["month"]): i for i, c in enumerate(x_cols)}
+
+    # Grid: rows = day-of-week (7), cols = months (len(x_cols))
+    grid = np.zeros((7, len(x_cols)), dtype=int)
+    monthly_totals = np.zeros(len(x_cols), dtype=int)
+    for y, m, d in zip(years, months, dows):
+        col = col_index.get((int(y), int(m)))
+        if col is None:
+            continue
+        grid[int(d), col] += 1
+        monthly_totals[col] += 1
+
+    ramp = colour.magma_like_ramp(32)
+
+    return {
+        "source": "DominicaCodas.csv",
+        "n_codas_used": int(valid.shape[0]),
+        "n_codas_dropped": int(dates.isna().sum()),
+        "x_axis": {
+            "kind": "year_month",
+            "labels": x_cols,
+            "n_cols": len(x_cols),
+        },
+        "y_axis": {
+            "kind": "day_of_week",
+            "labels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+            "n_rows": 7,
+        },
+        "grid": grid.tolist(),
+        "max_count": int(grid.max()),
+        "monthly_totals": monthly_totals.tolist(),
+        "ramp": ramp,
+        "caption": (
+            "Dataset 1 (DominicaCodas.csv) carries calendar Date only, no time-of-day. "
+            "LTSA therefore reduces to a 2-D density: months across, day-of-week down. "
+            "Cell shading is log(count + 1) on a perceptually uniform OKLCH magma-like ramp."
+        ),
+    }
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     print("Loading Dataset 2 with labels...")
@@ -135,8 +214,14 @@ def main() -> None:
     (OUT / "clusters.json").write_text(json.dumps(clusters, indent=2))
     print(f"  wrote clusters meta")
 
+    print("Building corpus_timeline.json (v3 LTSA from Dataset 1)...")
+    ct = build_corpus_timeline()
+    (OUT / "corpus_timeline.json").write_text(json.dumps(ct, separators=(",", ":")))
+    print(f"  wrote timeline: {ct['n_codas_used']} codas, "
+          f"{ct['x_axis']['n_cols']} months, max cell {ct['max_count']}")
+
     # Verification load
-    for name in ("codas.json", "exchanges.json", "clusters.json"):
+    for name in ("codas.json", "exchanges.json", "clusters.json", "corpus_timeline.json"):
         path = OUT / name
         data = json.loads(path.read_text())
         size = path.stat().st_size

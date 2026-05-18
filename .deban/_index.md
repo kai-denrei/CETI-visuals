@@ -45,6 +45,15 @@ No framework bloat. No PII. Compression over completeness.
   unmask (Fig 2). Reuses the existing JSON bundle; no pipeline change; v1 untouched.
   All three v2 visuals are explicitly conceptual — not model outputs. [[pm]] [[arch]]
   [[ux]] [[dev]]
+- 2026-05-18 — **v3 ships as a third sibling tab — hydroacoustics**: click-train rasterplot
+  with live playhead, LTSA-style heat-clock (extends `bundle.py` to emit
+  `corpus_timeline.json` from Dataset 1), and a stylised PPI sonar sweep. All three driven
+  by a single shared `PlaybackClock` (RAF-based, pausable, speed-controllable, scrubbable).
+  Audio is opt-in, gated on user gesture. Perceptually uniform OKLCH magma-like ramp baked
+  into the LTSA — no rainbow. v1 and v2 untouched. [[pm]] [[arch]] [[ux]] [[dev]]
+- 2026-05-18 — **DominicaCodas.csv date column has two formats** — `DD/MM/YYYY` (2005-2014)
+  and `DD-MM-YYYY` (2014-2017). Parser tries slash first, then fills the rest with dash.
+  All 8,719 rows parse cleanly. [[dev]]
 
 ## Open Questions (cross-role)
 <!-- Unresolved items spanning more than one role -->
@@ -61,3 +70,6 @@ No framework bloat. No PII. Compression over completeness.
   about 58 non-empty cells before adding rubato × ornament; with both axes the
   combinatorial maximum is 18 × 5 × 2 × 2 = 360, of which 143 or 156 are "frequently
   realised" depending on threshold. — owners: [[pm]] [[qa]] — since: 2026-05-18
+- [ ] **v3 PPI bearings are aspirational** — sperm whales don't broadcast bearing in
+  this dataset; the 18-spoke layout is a rendering convenience. Worth flagging in the
+  spoken caption too if v4 expands the section. — owners: [[ux]] [[qa]] — since: 2026-05-18
