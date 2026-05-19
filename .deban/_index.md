@@ -63,6 +63,12 @@ No framework bloat. No PII. Compression over completeness.
   operator workflow). Both bounded to v4 — v1/v2/v3 keep their rules. Override recorded in
   `DEAD_ENDS.md`, `.deban/roles/ux.md`, `.deban/roles/pm.md`. v1, v2, v3 untouched.
   [[pm]] [[arch]] [[ux]] [[dev]]
+- 2026-05-18 — **Project went public**: `github.com/kai-denrei/CETI-visuals` (public, `main`
+  default branch) + GitHub Pages at `https://kai-denrei.github.io/CETI-visuals/web/`. Root
+  `index.html` is a 0-second redirect to `web/`. Pages source = `main / /`. Cache-busting
+  toolkit installed at `web/scripts/` so each push rotates the favicon shape as visual
+  confirmation that the CDN picked up the new build. The `~/CLAUDE.md` "never push to main"
+  rule was explicitly waived for this project per user directive. [[devops]] [[arch]]
 
 ## Open Questions (cross-role)
 <!-- Unresolved items spanning more than one role -->
